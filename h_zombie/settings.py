@@ -25,7 +25,6 @@ SECRET_KEY = 'django-insecure-k3&7)o@0tt!qd42ht441g4f6(tj%k-dake069*fgfhi_l$$p1(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = 'users.User'
 CORS_ALLOW_ALL_ORIGINS = True  # Allows all origins; adjust as necessary
@@ -58,6 +57,8 @@ INSTALLED_APPS = [
     'api',
     'script',
 ]
+ALLOWED_HOSTS = ['*']
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

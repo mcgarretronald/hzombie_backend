@@ -13,30 +13,48 @@ class UserLoginView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
+        # Check if email and password are provided
+        if not email or not password:
+            return Response({'error': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the user exists based on the provided email
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'The email address does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Authenticate the user with the email and password
         user = authenticate(request, email=email, password=password)
 
         if user is not None:
+            # If authentication is successful, return the user's details
             return Response({
                 'message': 'Login successful',
                 'email': user.email,
                 'profile_picture': request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None
             }, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # If email exists but password is incorrect
+        return Response({'error': 'Incorrect password'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 # User Registration View
 class UserCreateView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+
 # User Listing View
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+
 # User Update View
 class UserUpdateView(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
 
 # Script ViewSet for CRUD operations
 class ScriptViewSet(viewsets.ModelViewSet):
@@ -44,12 +62,9 @@ class ScriptViewSet(viewsets.ModelViewSet):
     serializer_class = ScriptSerializer
 
     def perform_create(self, serializer):
-        user_id = self.request.data.get('user')  # Get user ID from request data
-        try:
-            user = User.objects.get(id=user_id)  # Fetch the user by user ID
-            serializer.save(user=user)  # Save the script with the selected user
-        except User.DoesNotExist:
-            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        # Simply save the script without requiring a user
+        serializer.save()
+
 
 # Rating ViewSet
 class RatingViewSet(viewsets.ModelViewSet):
@@ -65,9 +80,13 @@ class RatingViewSet(viewsets.ModelViewSet):
         if rating_value not in [1, -1]:
             return Response({"error": "Rating must be 1 (like) or -1 (dislike)."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Ensure user and script IDs are provided
+        if not user_id or not script_id:
+            return Response({"error": "User and script are required."}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             user = User.objects.get(id=user_id)
-            script = Script.objects.get(script_id=script_id)
+            script = Script.objects.get(id=script_id)
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         except Script.DoesNotExist:
